@@ -1,5 +1,5 @@
 # FixedPhysics
-![运行截图](docs/demo.png)
+![运行截图](docs/images/demo.png)
 Q32.32 Fixed-Point 3D Physics Engine for Unity
 
 基于 Q32.32 定点数的 3D 物理碰撞检测框架
