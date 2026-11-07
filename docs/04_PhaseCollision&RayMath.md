@@ -107,7 +107,7 @@
 ### 4.3 射线与任意凸多面体 (GJK 射线推进算法与钝角修复)
 对于胶囊体与任意凸包, 在 `GJKEPA.Raycast` 中实现了基于单纯形推进的 GJK Raycast 算法 
 
-![GJK推演](docs/images/04_GJK_1.jpg)
+![GJK推演](images/04_GJK_1.jpg)
 余下部分请详见docs/images 里面有一些推演图
 
 按时间顺序的算法推演过程:
