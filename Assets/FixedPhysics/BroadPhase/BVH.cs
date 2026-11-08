@@ -29,10 +29,6 @@ namespace FixedPhysics
         //key-碰撞体ID value-叶子节点编号
         public Dictionary<uint, int> LeafMap;
 
-
-        public HashSet<uint> ActiveID;
-        public List<uint> RemoveBuffer;
-
         public BVH(int count = 65536)
         {
             //默认四周外扩 0.2 米
@@ -48,9 +44,6 @@ namespace FixedPhysics
             _colliders = new FPCollider[count];
 
             LeafMap = new Dictionary<uint, int>(count >> 1);
-
-            ActiveID = new HashSet<uint>(count);
-            RemoveBuffer = new List<uint>(count);
 
             ClearGraph();
         }
@@ -121,8 +114,13 @@ namespace FixedPhysics
 
                 //计算cur l r三个的增量代价
                 FP cost_cur = _bounds[cur].GetSurface();
-                FP cost_l = FPBounds.Union(_bounds[l], bound).GetSurface() - _bounds[l].GetSurface();
-                FP cost_r = FPBounds.Union(_bounds[r], bound).GetSurface() - _bounds[r].GetSurface();
+                FP union_l = FPBounds.Union(_bounds[l], bound).GetSurface();
+                FP union_r = FPBounds.Union(_bounds[r], bound).GetSurface();
+
+                //叶子节点与新节点结合会新建一个包装盒(代价为union)
+                //内部节点则是将原有包装盒撑大(代价为union - old)
+                FP cost_l = (_left[l] == 0) ? union_l : (union_l - _bounds[l].GetSurface());
+                FP cost_r = (_left[r] == 0) ? union_r : (union_r - _bounds[r].GetSurface());
 
                 //如果和当前盒子cur Union的代价最小则不再往下拆
                 if (cost_cur < cost_l && cost_cur < cost_r)
@@ -239,14 +237,10 @@ namespace FixedPhysics
         }
         public void Update(IReadOnlyList<FPCollider> colliders)
         {
-            ActiveID.Clear();
             for (int i = 0; i < colliders.Count; i++)
             {
                 FPCollider collider = colliders[i];
                 if (collider == null) continue;
-
-                //统计此次更新的colliders
-                ActiveID.Add(collider.ID);
 
                 if (LeafMap.TryGetValue(collider.ID, out int node))
                 {
@@ -263,22 +257,6 @@ namespace FixedPhysics
                 {
                     Add(collider);
                 }
-            }
-
-            //将更新列表同步到当前BVH树中 若有节点被删除则手动调用删除
-            RemoveBuffer.Clear();
-            foreach (var item in LeafMap)
-            {
-                if (ActiveID.Contains(item.Key))
-                    continue;
-                RemoveBuffer.Add(item.Key);
-            }
-            foreach (uint ID in RemoveBuffer)
-            {
-                int node = LeafMap[ID];
-                LeafMap.Remove(ID);
-                Remove(node);
-                FreeNode(node);
             }
         }
 

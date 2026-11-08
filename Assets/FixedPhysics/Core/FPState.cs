@@ -50,8 +50,14 @@ namespace FixedPhysics
             FP dy = FreezeY ? FP.Zero : delta.y;
             FP dz = FreezeZ ? FP.Zero : delta.z;
 
-            Transform = new FPTransform(Transform.Position + new FPVector3(dx, dy, dz), Transform.Rotation);
-            UpdateColliders();
+            FPVector3 move = new FPVector3(dx, dy, dz);
+            Transform = new FPTransform(Transform.Position + move, Transform.Rotation);
+
+            for (int i = 0; i < Colliders.Count; i++)
+            {
+                FPBounds bound = Colliders[i].Bounds;
+                Colliders[i].Bounds = new FPBounds(bound.Min + move, bound.Max + move);
+            }
         }
         //设置物体姿态并同步所有碰撞盒
         public void SetTransform(FPTransform transform)

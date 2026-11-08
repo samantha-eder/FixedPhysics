@@ -12,10 +12,9 @@ namespace FixedPhysics.Bridge
 
         protected override FPShape CreateShape()
         {
-            Mesh m = Mesh != null ? Mesh : (TryGetComponent(out MeshFilter mf) ? mf.sharedMesh : null);
-            if (m != null && m.vertexCount > 0)
+            if (Mesh != null && Mesh.vertexCount > 0)
             {
-                Vector3[] raw = m.vertices;
+                Vector3[] raw = Mesh.vertices;
                 Vector3 scale = transform.localScale;
                 List<FPVector3> verts = new List<FPVector3>(raw.Length);
                 for (int i = 0; i < raw.Length; i++)
@@ -26,6 +25,7 @@ namespace FixedPhysics.Bridge
                 return new FPConvex(verts.ToArray());
             }
 
+            //生成八面体钻石
             FP r = FPConvert.ToFP(Radius);
             return new FPConvex(new FPVector3[]
             {
@@ -36,10 +36,9 @@ namespace FixedPhysics.Bridge
         }
         protected override void Draw()
         {
-            Mesh m = Mesh != null ? Mesh : (TryGetComponent(out MeshFilter mf) ? mf.sharedMesh : null);
-            if (m != null)
+            if (Mesh != null)
             {
-                Gizmos.DrawWireMesh(m, Vector3.zero, Quaternion.identity, transform.localScale);
+                Gizmos.DrawWireMesh(Mesh, Vector3.zero, Quaternion.identity, transform.localScale);
             }
             else
             {

@@ -16,6 +16,7 @@
 - `FPBody`:代表物体本身(相当于 `Rigidbody`), 每个物体只挂 1 个 内部创建并持有唯一的 `FPState`, 并在 `OnEnable / OnDisable` 时自动向全局 `FPRunner` 注册或注销 
 - `ColliderComponentBase`:碰撞盒形状基类, 派生出 `FPBoxCollider`、`FPSphereCollider`、`FPCapsuleCollider`、`FPConvexCollider` 四个独立脚本 每个脚本面板只显示当前形状专属的尺寸参数, 支持在同一个物体或子物体上挂载多个(挂在子物体上时自动通过 `InverseTransformPoint` 折算相对于 `FPBody` 的局部偏移), 全部绑定到同一个 `FPBody.State` 上, 并各自独立维护 `HitCount` 在 Scene 窗口绘制碰撞变红线框 
 
-### 1.3 FPRunner 与 Player:固定步进与实战测试
-- `FPRunner`:全局唯一的驱动器 在 `FixedUpdate` 中驱动 `World.Step()`, 随后遍历所有 `FPBody` 调用 `SyncToUnity()` 更新画面, 并在 `OnDrawGizmos` 中实时绘制三大粗相的空间结构线框 
-- `Player`:基于新版 `InputSystem` 的测试控制器 在 `FixedUpdate` 中读取键盘与鼠标输入, 直接调用 `Body.State.Move` 与 `SetTransform` 在纯定点数层面控制移动与旋转, 并支持鼠标左键发射 `QueryRay` 激光检测目标、鼠标右键触发 `QueryAABB` 范围推挤
+### 2.3 FPRunner、Player 与 StressTest: 多物体测试与确定性测试
+- `FPRunner`:全局唯一的驱动器 在 `FixedUpdate` 中使用 `Stopwatch` 测量 `World.Step()` 的纯逻辑耗时 `StepTime`, 随后遍历所有 `FPBody` 调用 `SyncToUnity()` 更新画面 
+- `Player`:基于新版 `InputSystem` 的角色测试控制器 在 `FixedUpdate` 中直接调用 `Body.State.Move` 与 `SetTransform` 控制移动与旋转, 支持左键发射 `QueryRay` 激光并绘制接触点与接触面法线、右键触发 `QueryAABB` 范围检测并推挤
+- `StressTest`:多形状多物体与确定性验证脚本 使用固定种子的 `FPRandom` 在 `40x40x40` 三维空间内生成 800 个具有随机三维姿态与速度的球体、方盒、胶囊、八面体钻石与圆柱凸包 在第 300 个FixedUpdate物理步自动提取全场所有物体定点数坐标的底层 64 位 `long Value` 计算哈希码, 实测在切换 `SpatialHash` / `Octree` / `BVH` 或重复重置运行时, 哈希指纹一致

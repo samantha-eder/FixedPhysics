@@ -8,6 +8,7 @@ namespace FixedPhysics.Bridge
         [Header("碰撞盒属性")]
         public bool IsTrigger = false;
         public bool ShowAABB = false;
+        public bool ShowGizmos = true;
 
         [Header("局部偏移")]
         public Vector3 Center = Vector3.zero;
@@ -53,6 +54,9 @@ namespace FixedPhysics.Bridge
 
         private void OnDrawGizmos()
         {
+            if (!ShowGizmos)
+                return;
+
             if (Collider == null)
             {
                 //编辑器未运行时的实时预览绘制

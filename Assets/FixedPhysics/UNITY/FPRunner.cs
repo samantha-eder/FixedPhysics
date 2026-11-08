@@ -31,6 +31,10 @@ namespace FixedPhysics.Bridge
         public PhysicsWorld World { get; private set; }
         public readonly List<FPBody> Bodies = new List<FPBody>();
 
+        //算法耗时测试
+        public float StepTime;
+        private System.Diagnostics.Stopwatch _watch = new System.Diagnostics.Stopwatch();
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -144,7 +148,11 @@ namespace FixedPhysics.Bridge
             World.SolverCount = SolverCount;
 
             //驱动定点数物理世界完成本帧计算
+            //并测量定点数的单步耗时 (毫秒)
+            _watch.Restart();
             World.Step();
+            _watch.Stop();
+            StepTime = (float)_watch.Elapsed.TotalMilliseconds;
 
             //将定点数结果同步到 Unity 表现层
             for (int i = 0; i < Bodies.Count; i++)

@@ -20,9 +20,9 @@
 - `FreezeX / FreezeY / FreezeZ`:仿照 Unity 的轴向约束开关 在 `Move(delta)` 时, 被锁定的坐标轴位移分量会被直接置为 `0`(例如在 2.5D 平面测试中勾选 `FreezeY`, 可防止多物体在墙角剧烈挤压时沿斜面法线的 Y 分量逃逸到空中或地下) 
 - `Colliders`:记录挂载在该物体名下的所有 `FPCollider` 部件列表 
 
-核心联动机制:
-当调用 `FPState.Move(delta)` 或 `SetTransform` 时, 不仅更新 `FPState` 自身唯一的 `Transform`, 还会立即遍历 `Colliders` 列表, 调用名下所有碰撞盒的 `UpdateBounds()` 
-这样当角色的“盾牌碰撞盒”撞墙被推退 0.2 米时, 推动的直接是共享的 `FPState`, 角色的“身体碰撞盒”在同一时刻自动后退 0.2 米并刷新包围盒；紧接着检测身体与墙壁时, 身体已经处于墙外, 天然消除了重复推挤 
+联动机制:
+1. 当调用 `FPState.SetTransform` 修改物体姿态(可能包含旋转改变)时, 会遍历 `Colliders` 列表调用 `UpdateBounds()`, 重新通过四元数旋转计算各部件的世界 AABB 
+2. 平移包围盒加速:当调用 `FPState.Move(delta)` 仅发生平移(未改变旋转四元数)时, 根据欧氏几何中 AABB 的平移不变性, 无需重新调用 `Shape.ComputeBounds`(避免 42 顶点的圆柱凸包或旋转方盒每帧重复执行上万次四元数乘法), 而是直接对名下所有 `Colliders[i].Bounds` 的 `Min` 和 `Max` 加上位移向量 `move` 
 
 ---
 

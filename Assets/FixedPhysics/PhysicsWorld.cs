@@ -209,27 +209,21 @@ namespace FixedPhysics
         //物理世界主循环驱动
         public void Step()
         {
-            //刷新Colliders里所有碰撞体的AABB包围盒
-            foreach (FPCollider item in Colliders)
-            {
-                item.UpdateBounds();
-            }
-
             //计算精确碰撞并收集
             _curHits.Clear();
 
-            //多轮迭代求解
+            //首次进入迭代前 更新粗相空间索引
+            BroadPhase.Update(Colliders);
+
             //每轮更新粗相并按PairKey排序
             //确保推开产生的新接触被检测 且三大粗相结果一致
+            BroadPhase.GetPotentialPairs(PotentialPairs);
+            PotentialPairs.Sort();
+
+            //多轮迭代求解
             for (int t = 1; t <= SolverCount; t++)
             {
-                //更新粗相空间结构
-                //并收集潜在碰撞对
-                BroadPhase.Update(Colliders);
-                BroadPhase.GetPotentialPairs(PotentialPairs);
-
-                //固定处理顺序
-                PotentialPairs.Sort();
+                bool isResolved = false;
 
                 //遍历所有潜在碰撞对
                 foreach (ColliderPair pair in PotentialPairs)
@@ -251,6 +245,9 @@ namespace FixedPhysics
                     if (t > 1 && trigger)
                         continue;
 
+                    if (t > 1 && !a.Bounds.Intersects(b.Bounds))
+                        continue;
+
                     //精确检测
                     CollisionManifold manifold = NarrowPhase(a, b);
                     if (manifold.IsHit)
@@ -259,18 +256,19 @@ namespace FixedPhysics
                         _curHits.Add(pair);
 
                         //触发器只记录碰撞不发生物理推挤
-                        if (!trigger)
+                        if (!trigger && manifold.Penetration > FP.Zero)
                         {
                             Resolve(a, b, manifold);
+                            isResolved = true;
                         }
                     }
                 }
+
+                //若本轮已无任何穿透推挤
+                //提前结束迭代
+                if (!isResolved)
+                    break;
             }
-
-            //求解结束后同步刷新到粗相索引中
-            //保证帧末调用Query能查到最新位置
-            BroadPhase.Update(Colliders);
-
             //分发碰撞生命周期事件
             DispatchEvents();
         }
